@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FactBank, GeneratedResume } from '@/lib/types'
 
 interface Props {
   factBank: FactBank
-  onGenerated: (resume: GeneratedResume) => void
+  onGenerated: (resume: GeneratedResume, jdText: string) => void
 }
 
 type InputMode = 'url' | 'text'
@@ -17,6 +17,8 @@ export default function JDInput({ factBank, onGenerated }: Props) {
   const [loading, setLoading] = useState<'scraping' | 'generating' | null>(null)
   const [error, setError] = useState('')
   const [scrapedText, setScrapedText] = useState('')
+  const [activeStep, setActiveStep] = useState(0)
+  const stepTimers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   async function scrapeURL() {
     if (!url.trim()) return
@@ -52,7 +54,14 @@ export default function JDInput({ factBank, onGenerated }: Props) {
     }
 
     setLoading('generating')
+    setActiveStep(0)
     setError('')
+    stepTimers.current.forEach(t => clearTimeout(t))
+    stepTimers.current = [
+      setTimeout(() => setActiveStep(1), 4000),
+      setTimeout(() => setActiveStep(2), 9000),
+      setTimeout(() => setActiveStep(3), 16000),
+    ]
     try {
       const res = await fetch('/api/generate-resume', {
         method: 'POST',
@@ -64,9 +73,11 @@ export default function JDInput({ factBank, onGenerated }: Props) {
         setError(data.error)
         return
       }
-      onGenerated(data.resume)
+      onGenerated(data.resume, text)
     } finally {
       setLoading(null)
+      stepTimers.current.forEach(t => clearTimeout(t))
+      setActiveStep(0)
     }
   }
 
@@ -76,19 +87,25 @@ export default function JDInput({ factBank, onGenerated }: Props) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-stone-100 mb-1">Job Description</h2>
-        <p className="text-stone-500 text-sm font-mono">Paste a job posting URL or the full JD text</p>
+        <h2 style={{ fontFamily: 'Syne', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text)', marginBottom: '4px' }}>Job Description</h2>
+        <p style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '13px' }}>Paste a job posting URL or the full JD text</p>
       </div>
 
       {/* Mode Toggle */}
-      <div className="flex rounded-lg overflow-hidden border border-stone-700 w-fit">
+      <div className="flex rounded-lg overflow-hidden w-fit" style={{ border: '1px solid var(--border)' }}>
         <button
           onClick={() => setMode('url')}
-          className={`px-4 py-2 text-sm font-mono transition-colors ${mode === 'url' ? 'bg-amber-500 text-stone-900 font-semibold' : 'bg-stone-800 text-stone-400 hover:text-stone-200'}`}
+          className="px-4 py-1.5 text-sm transition-colors"
+          style={mode === 'url'
+            ? { background: 'var(--ink)', color: 'var(--surface)', fontFamily: 'Syne', fontWeight: 600 }
+            : { background: 'var(--surface-2)', color: 'var(--text-muted)', fontFamily: 'Instrument Sans' }}
         >URL</button>
         <button
           onClick={() => setMode('text')}
-          className={`px-4 py-2 text-sm font-mono transition-colors ${mode === 'text' ? 'bg-amber-500 text-stone-900 font-semibold' : 'bg-stone-800 text-stone-400 hover:text-stone-200'}`}
+          className="px-4 py-1.5 text-sm transition-colors"
+          style={mode === 'text'
+            ? { background: 'var(--ink)', color: 'var(--surface)', fontFamily: 'Syne', fontWeight: 600 }
+            : { background: 'var(--surface-2)', color: 'var(--text-muted)', fontFamily: 'Instrument Sans' }}
         >Paste Text</button>
       </div>
 
@@ -116,16 +133,34 @@ export default function JDInput({ factBank, onGenerated }: Props) {
               ) : 'Fetch JD'}
             </button>
           </div>
-          <p className="text-stone-600 text-xs font-mono">
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'Instrument Sans' }}>
             Works with: Greenhouse, Lever, company career pages · LinkedIn requires manual paste
           </p>
           {scrapedText && (
-            <div className="bg-stone-900/50 border border-stone-700 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-                <span className="text-emerald-400 text-xs font-mono">JD fetched successfully</span>
+            <div className="rounded-lg p-3" style={{ background: 'var(--green-dim)', border: '1px solid var(--green-border)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--green)' }} />
+                  <span className="text-xs" style={{ color: 'var(--green)', fontFamily: 'Instrument Sans' }}>JD fetched successfully · click to edit</span>
+                </div>
               </div>
-              <p className="text-stone-400 text-xs font-mono line-clamp-4">{scrapedText.slice(0, 400)}...</p>
+              <textarea
+                className="w-full resize-none"
+                rows={6}
+                value={scrapedText}
+                onChange={e => setScrapedText(e.target.value)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: 'var(--text-muted)',
+                  fontFamily: 'DM Mono',
+                  fontSize: '11px',
+                  lineHeight: 1.6,
+                  width: '100%',
+                  cursor: 'text',
+                }}
+              />
             </div>
           )}
         </div>
@@ -141,25 +176,26 @@ export default function JDInput({ factBank, onGenerated }: Props) {
       )}
 
       {error && (
-        <div className="bg-red-950/40 border border-red-500/30 rounded-lg p-3">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="rounded-lg p-3" style={{ background: 'var(--red-dim)', border: '1px solid var(--red-border)' }}>
+          <p className="text-sm" style={{ color: 'var(--red)', fontFamily: 'Instrument Sans' }}>{error}</p>
         </div>
       )}
 
       <button
         onClick={generate}
         disabled={isLoading || !activeText.trim() || !factBank.experiences.length}
-        className="btn-primary w-full py-3 text-base font-semibold flex items-center justify-center gap-3"
+        className="btn-primary w-full flex items-center justify-center gap-3"
+        style={{ padding: '14px 20px', fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', borderRadius: '10px' }}
       >
         {loading === 'generating' ? (
           <>
-            <span className="w-5 h-5 border-2 border-stone-900/50 border-t-stone-900 rounded-full animate-spin" />
+            <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
             <span>Generating tailored resume...</span>
           </>
         ) : (
           <>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             Generate Resume
           </>
@@ -167,19 +203,25 @@ export default function JDInput({ factBank, onGenerated }: Props) {
       </button>
 
       {loading === 'generating' && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-mono text-stone-500">
-            <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            Step 1: Selecting best title frames for each experience...
-          </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-stone-500">
-            <span className="w-2 h-2 bg-stone-600 rounded-full" />
-            Step 2: Rewriting bullets with JD keywords...
-          </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-stone-500">
-            <span className="w-2 h-2 bg-stone-600 rounded-full" />
-            Step 3: Fitting to one page...
-          </div>
+        <div className="space-y-2.5">
+          {[
+            'Selecting best title version for each experience...',
+            'Analyzing JD keywords...',
+            'Rewriting bullets with JD keywords...',
+            'Fitting to one page...',
+          ].map((label, i) => (
+            <div key={i} className="flex items-center gap-2.5 text-xs" style={{ color: i <= activeStep ? 'var(--text)' : 'var(--text-dim)', fontFamily: 'Instrument Sans', transition: 'color 0.4s' }}>
+              <span
+                className={i === activeStep ? 'animate-pulse' : ''}
+                style={{
+                  width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                  background: i < activeStep ? 'var(--green)' : i === activeStep ? 'var(--green)' : 'var(--border-2)',
+                  transition: 'background 0.4s',
+                }}
+              />
+              {label}
+            </div>
+          ))}
         </div>
       )}
     </div>

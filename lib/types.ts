@@ -1,4 +1,4 @@
-export interface Frame {
+export interface Version {
   id: string
   title: string
   bullets: string[]
@@ -11,7 +11,7 @@ export interface Experience {
   location: string
   startDate: string
   endDate: string
-  frames: Frame[]
+  versions: Version[]
 }
 
 export interface Education {

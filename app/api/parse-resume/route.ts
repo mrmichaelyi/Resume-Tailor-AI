@@ -100,11 +100,11 @@ function mergeIntofactBank(
           location: exp.location,
           startDate: exp.startDate,
           endDate: exp.endDate,
-          frames: [],
+          versions: [],
         })
       }
       const existing = experienceMap.get(key)!
-      existing.frames.push({
+      existing.versions.push({
         id: randomUUID(),
         title: exp.title,
         bullets: exp.bullets,

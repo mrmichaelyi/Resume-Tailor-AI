@@ -11,12 +11,27 @@ const EMPTY_FACTBANK: FactBank = {
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
+// Migrate legacy data: rename frames → versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrate(fb: any): FactBank {
+  if (!fb?.experiences) return fb
+  fb.experiences = fb.experiences.map((exp: any) => {
+    if (exp.frames && !exp.versions) {
+      exp.versions = exp.frames
+      delete exp.frames
+    }
+    if (!exp.versions) exp.versions = []
+    return exp
+  })
+  return fb as FactBank
+}
+
 export function loadFactBank(): FactBank {
   if (typeof window === 'undefined') return EMPTY_FACTBANK
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return EMPTY_FACTBANK
-    return JSON.parse(raw) as FactBank
+    return migrate(JSON.parse(raw))
   } catch {
     return EMPTY_FACTBANK
   }

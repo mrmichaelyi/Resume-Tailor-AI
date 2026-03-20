@@ -6,6 +6,7 @@ import { GeneratedResume } from '@/lib/types'
 interface Props {
   resume: GeneratedResume
   onChange: (r: GeneratedResume) => void
+  onDownloaded?: () => void
 }
 
 // Editable: uses ref-based DOM updates so hover re-renders never reset typed content
@@ -125,7 +126,7 @@ function Row({ id, hovered, setHovered, onDelete, children, style }: {
   )
 }
 
-export default function ResumePreview({ resume, onChange }: Props) {
+export default function ResumePreview({ resume, onChange, onDownloaded }: Props) {
   const [downloading, setDownloading] = useState(false)
   const [hovered, setHovered] = useState<string | null>(null)
   const [showReport, setShowReport] = useState(false)
@@ -218,6 +219,7 @@ export default function ResumePreview({ resume, onChange }: Props) {
       a.download = `${resume.contact.name || 'resume'}.pdf`
       a.click()
       URL.revokeObjectURL(url)
+      onDownloaded?.()
     } catch (err) {
       alert(String(err))
     } finally {
@@ -252,20 +254,21 @@ export default function ResumePreview({ resume, onChange }: Props) {
   const improvement = afterPct - beforePct
 
   function ScoreRing({ pct, color, label }: { pct: number; color: string; label: string }) {
-    const r = 28, cx = 36, cy = 36, stroke = 5
+    const r = 32, cx = 42, cy = 42, stroke = 5
     const circ = 2 * Math.PI * r
     const dash = (pct / 100) * circ
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <svg width={72} height={72}>
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#2a2a2a" strokeWidth={stroke} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        <svg width={84} height={84}>
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--surface-2)" strokeWidth={stroke} />
           <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={stroke}
             strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-            transform={`rotate(-90 ${cx} ${cy})`} />
+            transform={`rotate(-90 ${cx} ${cy})`}
+            style={{ transition: 'stroke-dasharray 0.6s ease' }} />
           <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
-            style={{ fontSize: 14, fontWeight: 700, fill: '#fff', fontFamily: 'DM Mono' }}>{pct}%</text>
+            style={{ fontSize: 16, fontWeight: 700, fill: 'var(--text)', fontFamily: 'DM Mono' }}>{pct}%</text>
         </svg>
-        <span style={{ fontSize: 11, color: '#666', fontFamily: 'DM Mono' }}>{label}</span>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Instrument Sans', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
       </div>
     )
   }
@@ -275,95 +278,136 @@ export default function ResumePreview({ resume, onChange }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* ATS Score Card */}
-      <div className="mb-4 rounded-xl border overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        {/* Top row: scores + actions */}
-        <div className="p-4 flex items-center justify-between gap-4">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <ScoreRing pct={beforePct} color="#d97706" label="Before" />
-            <svg width={24} height={24} fill="none" stroke="#555" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7 7 7-7 7" /></svg>
-            <ScoreRing pct={afterPct} color="#4ade80" label="After" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {improvement > 0 && (
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#4ade80', fontFamily: 'DM Mono' }}>+{improvement}% ATS match</span>
-              )}
-              {resume.jdKeywordCoverage.hardSkillsMissing?.length > 0 && (
-                <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'DM Mono' }}>
-                  ⚠ Hard skills missing: {resume.jdKeywordCoverage.hardSkillsMissing.join(', ')}
-                </span>
-              )}
-              {resume.jdKeywordCoverage.missing.filter(k => !resume.jdKeywordCoverage.hardSkillsMissing?.includes(k)).length > 0 && (
-                <span style={{ fontSize: 11, color: 'var(--amber)', fontFamily: 'DM Mono' }}>
-                  Missing: {resume.jdKeywordCoverage.missing.filter(k => !resume.jdKeywordCoverage.hardSkillsMissing?.includes(k)).join(', ')}
-                </span>
-              )}
-              {rpt && (
-                <button onClick={() => setShowReport(r => !r)} style={{ fontSize: 11, color: '#888', fontFamily: 'DM Mono', textAlign: 'left', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
-                  {showReport ? '▲ hide report' : '▼ view keyword report'}
-                </button>
-              )}
-            </div>
+      <div className="mb-4 rounded-xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderTop: '2px solid var(--ink)', boxShadow: '0 2px 8px oklch(15% 0.010 80 / 0.06)' }}>
+
+        {/* Main row */}
+        <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 24 }}>
+
+          {/* Score rings */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+            <ScoreRing pct={beforePct} color="var(--text-dim)" label="Before" />
+            <svg width={16} height={16} fill="none" stroke="var(--text-dim)" strokeWidth={2} style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8h10m-4-4 4 4-4 4" /></svg>
+            <ScoreRing pct={afterPct} color="var(--green)" label="After" />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-            <div style={{ display: 'flex', gap: 8 }}>
+
+          {/* Stats — flex-1 so it occupies middle space */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {improvement > 0 && (
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontSize: 26, fontWeight: 700, color: 'var(--green)', fontFamily: 'DM Mono', letterSpacing: '-0.03em', lineHeight: 1 }}>+{improvement}%</span>
+                <span style={{ fontSize: 13, color: 'var(--green)', fontFamily: 'Instrument Sans', opacity: 0.75 }}>ATS match improvement</span>
+              </div>
+            )}
+            {resume.jdKeywordCoverage.hardSkillsMissing?.length > 0 && (
+              <span style={{ fontSize: 13, color: 'var(--red)', fontFamily: 'Instrument Sans', lineHeight: 1.5 }}>
+                ⚠ Missing hard skills: {resume.jdKeywordCoverage.hardSkillsMissing.join(', ')}
+              </span>
+            )}
+            {resume.jdKeywordCoverage.missing.filter(k => !resume.jdKeywordCoverage.hardSkillsMissing?.includes(k)).length > 0 && (
+              <span style={{ fontSize: 13, color: 'var(--orange)', fontFamily: 'Instrument Sans', lineHeight: 1.5 }}>
+                Missing: {resume.jdKeywordCoverage.missing.filter(k => !resume.jdKeywordCoverage.hardSkillsMissing?.includes(k)).join(', ')}
+              </span>
+            )}
+          </div>
+
+          {/* Action buttons — all same height/font */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {resume.jdReport && (
-                <button onClick={recalcScore} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all" style={{ background: 'rgba(148,163,184,0.1)', border: '1px solid rgba(148,163,184,0.2)', color: '#94a3b8' }}>
-                  ↻ Recalculate Score
+                <button
+                  onClick={recalcScore}
+                  style={{ height: 34, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--text)'; el.style.borderColor = 'var(--border-2)' }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--text-muted)'; el.style.borderColor = 'var(--border)' }}
+                >
+                  Recalculate
                 </button>
               )}
               {!boosted && resume.jdReport?.needToAdd && resume.jdReport.needToAdd.length > 0 && (
-                <button onClick={boostATS} disabled={boosting} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all" style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80' }}>
+                <button
+                  onClick={boostATS}
+                  disabled={boosting}
+                  style={{ height: 34, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--text)'; el.style.borderColor = 'var(--border-2)' }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--text-muted)'; el.style.borderColor = 'var(--border)' }}
+                >
                   {boosting ? (
-                    <><span className="w-4 h-4 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" />Boosting...</>
+                    <><span style={{ width: 12, height: 12, border: '1.5px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />Boosting...</>
                   ) : (
-                    <>⚡ Boost ATS Score</>
+                    <>Boost ATS</>
                   )}
                 </button>
               )}
-              {boosted && <span style={{ fontSize: 12, color: '#4ade80', fontFamily: 'DM Mono', alignSelf: 'center' }}>✓ Boosted</span>}
-              <button onClick={downloadPDF} disabled={downloading} className="btn-primary flex items-center gap-2">
+              {boosted && (
+                <span style={{ height: 34, padding: '0 14px', display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontWeight: 600, fontSize: 13 }}>
+                  Boosted
+                </span>
+              )}
+              <button
+                onClick={downloadPDF}
+                disabled={downloading}
+                style={{ height: 34, padding: '0 14px', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontWeight: 600, fontSize: 13, cursor: downloading ? 'not-allowed' : 'pointer', opacity: downloading ? 0.5 : 1, transition: 'all 0.15s', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => { if (!downloading) { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--text)'; el.style.borderColor = 'var(--border-2)' } }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--text-muted)'; el.style.borderColor = 'var(--border)' }}
+              >
                 {downloading ? (
-                  <><span className="w-4 h-4 border-2 border-stone-900/50 border-t-stone-900 rounded-full animate-spin" />Generating...</>
+                  <><span style={{ width: 12, height: 12, border: '1.5px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', opacity: 0.6 }} />Generating...</>
                 ) : (
-                  <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 4H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Download PDF</>
+                  <>Download PDF</>
                 )}
               </button>
             </div>
-            <span className="text-xs font-mono text-stone-600">Click to edit · hover row to delete</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Instrument Sans' }}>Click to edit · hover row to delete</span>
           </div>
         </div>
 
+        {/* Keyword report toggle — centered pill */}
+        {rpt && (
+          <div style={{ borderTop: '1px solid var(--border)', padding: '10px 24px', display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => setShowReport(r => !r)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 20, background: showReport ? 'var(--surface-2)' : 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', letterSpacing: '0.01em' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--surface-2)'; el.style.color = 'var(--text)'; el.style.borderColor = 'var(--border-2)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = showReport ? 'var(--surface-2)' : 'transparent'; el.style.color = 'var(--text-muted)'; el.style.borderColor = 'var(--border)' }}
+            >
+              <svg width={12} height={12} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" style={{ transition: 'transform 0.2s', transform: showReport ? 'rotate(180deg)' : 'rotate(0deg)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              {showReport ? 'Hide keyword report' : 'View keyword report'}
+            </button>
+          </div>
+        )}
+
         {/* JD Keyword Report — expandable */}
         {showReport && rpt && (
-          <div className="border-t p-4 grid gap-3" style={{ borderColor: 'var(--border)', gridTemplateColumns: '1fr 1fr 1fr', fontSize: 11, fontFamily: 'DM Mono' }}>
+          <div style={{ borderTop: '1px solid var(--border)', padding: '20px 24px', display: 'grid', gap: 16, gridTemplateColumns: '1fr 1fr 1fr', fontFamily: 'Instrument Sans', fontSize: 13 }}>
             <div>
-              <p style={{ color: 'var(--amber)', fontWeight: 700, marginBottom: 4 }}>Role</p>
-              <p style={{ color: '#ccc' }}>{rpt.role}{rpt.company ? ` · ${rpt.company}` : ''}</p>
+              <p style={{ color: 'var(--text-muted)', fontWeight: 700, marginBottom: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Role</p>
+              <p style={{ color: 'var(--text)', lineHeight: 1.6 }}>{rpt.role}{rpt.company ? ` · ${rpt.company}` : ''}</p>
             </div>
             {[
-              { label: 'Hard Skills / Tools', items: rpt.hardSkills, color: '#f87171' },
-              { label: 'Business Context', items: rpt.businessContext, color: '#60a5fa' },
-              { label: 'Title / Function', items: rpt.titleKeywords, color: '#a78bfa' },
-              { label: 'Action Keywords', items: rpt.actionKeywords, color: '#94a3b8' },
-              { label: 'Domain', items: rpt.domainKeywords, color: '#94a3b8' },
-              { label: 'Hard Filters', items: rpt.hardFilters, color: '#fbbf24' },
+              { label: 'Hard Skills', items: rpt.hardSkills, color: 'var(--red)' },
+              { label: 'Business Context', items: rpt.businessContext, color: 'var(--blue)' },
+              { label: 'Title / Function', items: rpt.titleKeywords, color: '#7c6fcd' },
+              { label: 'Action Keywords', items: rpt.actionKeywords, color: 'var(--text-muted)' },
+              { label: 'Domain', items: rpt.domainKeywords, color: 'var(--text-muted)' },
+              { label: 'Hard Filters', items: rpt.hardFilters, color: 'var(--orange)' },
             ].map(({ label, items, color }) => items?.length > 0 && (
               <div key={label}>
-                <p style={{ color, fontWeight: 700, marginBottom: 4 }}>{label}</p>
-                <p style={{ color: '#999', lineHeight: 1.6 }}>{items.join(', ')}</p>
+                <p style={{ color, fontWeight: 700, marginBottom: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
+                <p style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>{items.join(', ')}</p>
               </div>
             ))}
-            <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border)', paddingTop: 8, display: 'flex', gap: 24 }}>
+            <div style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border)', paddingTop: 16, display: 'flex', gap: 24 }}>
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#4ade80', fontWeight: 700, marginBottom: 4 }}>✓ Top 10 Keywords</p>
-                <p style={{ color: '#999', lineHeight: 1.6 }}>{rpt.top10?.join(', ')}</p>
+                <p style={{ color: 'var(--green)', fontWeight: 700, marginBottom: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>✓ Top 10</p>
+                <p style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>{rpt.top10?.join(', ')}</p>
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#4ade80', fontWeight: 700, marginBottom: 4 }}>✓ Already Have</p>
-                <p style={{ color: '#999', lineHeight: 1.6 }}>{rpt.alreadyHave?.join(', ') || '—'}</p>
+                <p style={{ color: 'var(--green)', fontWeight: 700, marginBottom: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>✓ Have</p>
+                <p style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>{rpt.alreadyHave?.join(', ') || '—'}</p>
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ color: '#f87171', fontWeight: 700, marginBottom: 4 }}>✗ Need to Add</p>
-                <p style={{ color: '#999', lineHeight: 1.6 }}>{rpt.needToAdd?.join(', ') || '—'}</p>
+                <p style={{ color: 'var(--red)', fontWeight: 700, marginBottom: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>✗ Missing</p>
+                <p style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>{rpt.needToAdd?.join(', ') || '—'}</p>
               </div>
             </div>
           </div>

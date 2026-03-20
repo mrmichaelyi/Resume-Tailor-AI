@@ -4,7 +4,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import pdfParse from 'pdf-parse'
 import { FactBank, GeneratedResume, GeneratedExperience, JDReport } from '@/lib/types'
 import {
-  buildFrameSelectionPrompt,
+  buildVersionSelectionPrompt,
   buildJDReportPrompt,
   buildBulletRewritePrompt,
   buildSkillsPrompt,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     const [frameSelectionCompletion, jdReportCompletion] = await Promise.all([
       openai.chat.completions.create({
         model: 'gpt-4o',
-        messages: [{ role: 'user', content: buildFrameSelectionPrompt(jdText, factBank.experiences) }],
+        messages: [{ role: 'user', content: buildVersionSelectionPrompt(jdText, factBank.experiences) }],
         response_format: { type: 'json_object' },
         temperature: 0.1,
       }),
@@ -70,10 +70,10 @@ export async function POST(req: NextRequest) {
       }),
     ])
 
-    const frameSelection = JSON.parse(frameSelectionCompletion.choices[0].message.content || '{}') as {
+    const versionSelection = JSON.parse(frameSelectionCompletion.choices[0].message.content || '{}') as {
       jdFunction: string
       jdSeniority: string
-      selections: Array<{ experienceId: string; selectedFrameId: string }>
+      selections: Array<{ experienceId: string; selectedVersionId: string }>
     }
 
     const rawReport = JSON.parse(jdReportCompletion.choices[0].message.content || '{}') as Omit<JDReport, 'alreadyHave' | 'needToAdd'>
@@ -94,23 +94,23 @@ export async function POST(req: NextRequest) {
       return total > 0 ? Math.round(earned / total * 100) : 0
     }
 
-    // Build frame map
-    const frameMap = new Map(frameSelection.selections.map(s => [s.experienceId, s.selectedFrameId]))
+    // Build version map
+    const versionMap = new Map(versionSelection.selections.map(s => [s.experienceId, s.selectedVersionId]))
 
-    // Build numbered bullets for each experience using selected frame
+    // Build numbered bullets for each experience using selected version
     const experiencesWithNumberedBullets = factBank.experiences.map(exp => {
-      const selectedFrameId = frameMap.get(exp.id)
-      const selectedFrame = exp.frames.find(f => f.id === selectedFrameId) || exp.frames[0]
-      const bullets = selectedFrame.bullets.filter(b => b.trim())
+      const selectedVersionId = versionMap.get(exp.id)
+      const selectedVersion = exp.versions.find(v => v.id === selectedVersionId) || exp.versions[0]
+      const bullets = selectedVersion.bullets.filter(b => b.trim())
       const numberedBullets = bullets.map((b, i) => `[${i + 1}] ${b}`).join('\n')
       return { experienceId: exp.id, company: exp.company, numberedBullets }
     })
 
     // Calculate BEFORE score (include titles so "Data Scientist Intern" etc. are matched)
     const originalText = factBank.experiences.map(exp => {
-      const selectedFrameId = frameMap.get(exp.id)
-      const selectedFrame = exp.frames.find(f => f.id === selectedFrameId) || exp.frames[0]
-      return [selectedFrame.title, ...selectedFrame.bullets].join(' ')
+      const selectedVersionId = versionMap.get(exp.id)
+      const selectedVersion = exp.versions.find(v => v.id === selectedVersionId) || exp.versions[0]
+      return [selectedVersion.title, ...selectedVersion.bullets].join(' ')
     }).join(' ').toLowerCase()
 
     const beforeCovered = atsKeywords.filter(kw => keywordMatches(kw, originalText))
@@ -157,12 +157,12 @@ export async function POST(req: NextRequest) {
 
     // Assemble generated resume
     const generatedExperiences: GeneratedExperience[] = factBank.experiences.map(exp => {
-      const selectedFrameId = frameMap.get(exp.id)
-      const selectedFrame = exp.frames.find(f => f.id === selectedFrameId) || exp.frames[0]
-      const bullets = bulletMap.get(exp.id) || selectedFrame.bullets
+      const selectedVersionId = versionMap.get(exp.id)
+      const selectedVersion = exp.versions.find(v => v.id === selectedVersionId) || exp.versions[0]
+      const bullets = bulletMap.get(exp.id) || selectedVersion.bullets
       return {
         company: exp.company,
-        title: selectedFrame.title,
+        title: selectedVersion.title,
         location: exp.location,
         startDate: exp.startDate,
         endDate: exp.endDate,

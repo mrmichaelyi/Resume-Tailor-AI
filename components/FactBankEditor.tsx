@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { FactBank, Experience, Education, Frame } from '@/lib/types'
+import { FactBank, Experience, Education, Version } from '@/lib/types'
 import { saveFactBank, exportFactBank, importFactBank } from '@/lib/storage'
 
 function newId() {
@@ -17,7 +17,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadErrors, setUploadErrors] = useState<string[]>([])
   const [expandedExp, setExpandedExp] = useState<string | null>(null)
-  const [activeFrame, setActiveFrame] = useState<Record<string, string>>({})
+  const [activeVersion, setActiveVersion] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const update = useCallback((fb: FactBank) => {
@@ -69,7 +69,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
       const key = exp.company.toLowerCase()
       if (map.has(key)) {
         const ex = map.get(key)!
-        map.set(key, { ...ex, frames: [...ex.frames, ...exp.frames] })
+        map.set(key, { ...ex, versions: [...ex.versions, ...exp.versions] })
       } else {
         map.set(key, exp)
       }
@@ -96,70 +96,70 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
 
   function addExp() {
     const id = newId()
-    const frameId = newId()
+    const versionId = newId()
     const newExp: Experience = {
       id,
       company: 'New Company',
       location: '',
       startDate: '',
       endDate: '',
-      frames: [{ id: frameId, title: 'Title', bullets: [''], sourceFile: undefined }],
+      versions: [{ id: versionId, title: 'Title', bullets: [''], sourceFile: undefined }],
     }
     update({ ...factBank, experiences: [...factBank.experiences, newExp] })
     setExpandedExp(id)
-    setActiveFrame(prev => ({ ...prev, [id]: frameId }))
+    setActiveVersion(prev => ({ ...prev, [id]: versionId }))
   }
 
-  function addFrame(expId: string) {
-    const frameId = newId()
+  function addVersion(expId: string) {
+    const versionId = newId()
     update({
       ...factBank,
       experiences: factBank.experiences.map(e =>
         e.id === expId
-          ? { ...e, frames: [...e.frames, { id: frameId, title: 'New Title', bullets: [''], sourceFile: undefined }] }
+          ? { ...e, versions: [...e.versions, { id: versionId, title: 'New Title', bullets: [''], sourceFile: undefined }] }
           : e
       ),
     })
-    setActiveFrame(prev => ({ ...prev, [expId]: frameId }))
+    setActiveVersion(prev => ({ ...prev, [expId]: versionId }))
   }
 
-  function updateFrame(expId: string, frameId: string, patch: Partial<Frame>) {
+  function updateVersion(expId: string, versionId: string, patch: Partial<Version>) {
     update({
       ...factBank,
       experiences: factBank.experiences.map(e =>
         e.id === expId
-          ? { ...e, frames: e.frames.map(f => f.id === frameId ? { ...f, ...patch } : f) }
+          ? { ...e, versions: e.versions.map(f => f.id === versionId ? { ...f, ...patch } : f) }
           : e
       ),
     })
   }
 
-  function deleteFrame(expId: string, frameId: string) {
+  function deleteVersion(expId: string, versionId: string) {
     update({
       ...factBank,
       experiences: factBank.experiences.map(e =>
-        e.id === expId ? { ...e, frames: e.frames.filter(f => f.id !== frameId) } : e
+        e.id === expId ? { ...e, versions: e.versions.filter(f => f.id !== versionId) } : e
       ),
     })
   }
 
-  function updateBullet(expId: string, frameId: string, idx: number, value: string) {
+  function updateBullet(expId: string, versionId: string, idx: number, value: string) {
     const exp = factBank.experiences.find(e => e.id === expId)!
-    const frame = exp.frames.find(f => f.id === frameId)!
-    const newBullets = frame.bullets.map((b, i) => i === idx ? value : b)
-    updateFrame(expId, frameId, { bullets: newBullets })
+    const version = exp.versions.find(f => f.id === versionId)!
+    const newBullets = version.bullets.map((b, i) => i === idx ? value : b)
+    updateVersion(expId, versionId, { bullets: newBullets })
   }
 
-  function addBullet(expId: string, frameId: string) {
+  function addBullet(expId: string, versionId: string) {
     const exp = factBank.experiences.find(e => e.id === expId)!
-    const frame = exp.frames.find(f => f.id === frameId)!
-    updateFrame(expId, frameId, { bullets: [...frame.bullets, ''] })
+    const version = exp.versions.find(f => f.id === versionId)!
+    updateVersion(expId, versionId, { bullets: [...version.bullets, ''] })
   }
 
-  function deleteBullet(expId: string, frameId: string, idx: number) {
+  function deleteBullet(expId: string, versionId: string, idx: number) {
     const exp = factBank.experiences.find(e => e.id === expId)!
-    const frame = exp.frames.find(f => f.id === frameId)!
-    updateFrame(expId, frameId, { bullets: frame.bullets.filter((_, i) => i !== idx) })
+    const version = exp.versions.find(f => f.id === versionId)!
+    updateVersion(expId, versionId, { bullets: version.bullets.filter((_, i) => i !== idx) })
   }
 
   function updateSkill(idx: number, value: string) {
@@ -182,11 +182,12 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
     <div className="space-y-6">
       {/* Upload Zone */}
       <div
-        className="border-2 border-dashed border-amber-500/30 rounded-xl p-8 text-center cursor-pointer hover:border-amber-500/60 transition-colors bg-amber-500/5"
+        className="rounded-xl p-8 text-center cursor-pointer transition-all"
+        style={{ border: '1.5px dashed var(--border-2)', background: 'var(--surface-2)' }}
         onClick={() => fileInputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); e.currentTarget.classList.add('border-amber-500/60') }}
-        onDragLeave={e => e.currentTarget.classList.remove('border-amber-500/60')}
-        onDrop={e => { e.preventDefault(); handleUpload(e.dataTransfer.files) }}
+        onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--ink)'; e.currentTarget.style.background = 'var(--surface)' }}
+        onDragLeave={e => { e.currentTarget.style.borderColor = 'var(--border-2)'; e.currentTarget.style.background = 'var(--surface-2)' }}
+        onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--border-2)'; e.currentTarget.style.background = 'var(--surface-2)'; handleUpload(e.dataTransfer.files) }}
       >
         <input
           ref={fileInputRef}
@@ -198,22 +199,24 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         />
         {uploading ? (
           <div className="flex items-center justify-center gap-3">
-            <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-amber-400 font-mono text-sm">Parsing resumes with AI...</span>
+            <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--border-2)', borderTopColor: 'var(--ink)' }} />
+            <span className="text-sm" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans' }}>Parsing resumes with AI...</span>
           </div>
         ) : (
           <div>
-            <div className="text-3xl mb-2">⊕</div>
-            <p className="text-stone-300 font-medium">Drop resume files here or click to upload</p>
-            <p className="text-stone-500 text-sm mt-1 font-mono">PDF · DOCX · TXT — multiple files supported</p>
+            <div className="mb-3" style={{ color: 'var(--text-dim)' }}>
+              <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="mx-auto"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+            </div>
+            <p className="font-medium" style={{ color: 'var(--text)', fontFamily: 'Instrument Sans' }}>Drop resume files here or click to upload</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans' }}>PDF · DOCX · TXT — multiple files supported</p>
           </div>
         )}
       </div>
 
       {uploadErrors.length > 0 && (
-        <div className="bg-red-950/40 border border-red-500/30 rounded-lg p-3">
+        <div className="rounded-lg p-3" style={{ background: 'var(--red-dim)', border: '1px solid var(--red-border)' }}>
           {uploadErrors.map((e, i) => (
-            <p key={i} className="text-red-400 text-sm font-mono">{e}</p>
+            <p key={i} className="text-sm" style={{ color: 'var(--red)', fontFamily: 'Instrument Sans' }}>{e}</p>
           ))}
         </div>
       )}
@@ -233,7 +236,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         <div className="card grid grid-cols-2 gap-3">
           {(['name', 'email', 'phone', 'location', 'linkedin', 'github', 'website'] as const).map(field => (
             <div key={field}>
-              <label className="text-stone-500 text-xs font-mono uppercase tracking-wider block mb-1">{field}</label>
+              <label className="block mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field}</label>
               <input
                 className="input-field w-full"
                 value={factBank.contact[field] || ''}
@@ -253,13 +256,13 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
             <div className="flex justify-end mb-2">
               <button
                 onClick={() => update({ ...factBank, education: factBank.education.filter(e => e.id !== edu.id) })}
-                className="text-stone-600 hover:text-red-400 transition-colors text-sm"
+                className="transition-colors text-sm" style={{ color: "var(--text-muted)" }} onMouseEnter={e => (e.currentTarget.style.color = "var(--red)")} onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
               >Remove</button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {(['school', 'location', 'degree', 'field', 'startDate', 'endDate'] as const).map(f => (
                 <div key={f}>
-                  <label className="text-stone-500 text-xs font-mono uppercase tracking-wider block mb-1">{f}</label>
+                  <label className="block mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>{f}</label>
                   <input
                     className="input-field w-full"
                     value={(edu[f] as string) || ''}
@@ -285,7 +288,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         <div className="card space-y-2">
           {factBank.skills.map((skill, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <span className="text-amber-500 font-mono text-sm">•</span>
+              <span className="font-mono text-sm" style={{ color: 'var(--text-dim)' }}>•</span>
               <input
                 className="input-field flex-1"
                 value={skill}
@@ -294,13 +297,16 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
               />
               <button
                 onClick={() => update({ ...factBank, skills: factBank.skills.filter((_, j) => j !== i) })}
-                className="text-stone-600 hover:text-red-400 transition-colors text-lg leading-none"
+                className="transition-colors text-lg leading-none" style={{ color: 'var(--text-muted)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
               >×</button>
             </div>
           ))}
           <button
             onClick={() => update({ ...factBank, skills: [...factBank.skills, ''] })}
-            className="text-amber-500 hover:text-amber-400 text-sm font-mono transition-colors"
+            className="text-sm font-mono transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
           >+ Add skill group</button>
         </div>
       </section>
@@ -314,8 +320,8 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         <div className="space-y-3">
           {factBank.experiences.map(exp => {
             const isOpen = expandedExp === exp.id
-            const currentFrameId = activeFrame[exp.id] || exp.frames[0]?.id
-            const currentFrame = exp.frames.find(f => f.id === currentFrameId) || exp.frames[0]
+            const currentVersionId = activeVersion[exp.id] || exp.versions[0]?.id
+            const currentVersion = exp.versions.find(f => f.id === currentVersionId) || exp.versions[0]
 
             return (
               <div key={exp.id} className="card">
@@ -325,15 +331,15 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
                   onClick={() => setExpandedExp(isOpen ? null : exp.id)}
                 >
                   <div>
-                    <span className="font-semibold text-stone-100">{exp.company || 'Unnamed Company'}</span>
-                    <span className="text-stone-500 text-sm ml-2 font-mono">{exp.frames.length} frame{exp.frames.length !== 1 ? 's' : ''}</span>
+                    <span style={{ fontFamily: 'Syne', fontWeight: 600, fontSize: '15px', color: 'var(--text)' }}>{exp.company || 'Unnamed Company'}</span>
+                    <span className="ml-2" style={{ fontFamily: 'Instrument Sans', fontSize: '12px', color: 'var(--text-muted)' }}>{exp.versions.length} version{exp.versions.length !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={e => { e.stopPropagation(); deleteExp(exp.id) }}
-                      className="text-stone-600 hover:text-red-400 transition-colors text-sm"
+                      className="transition-colors text-sm" style={{ color: "var(--text-muted)" }} onMouseEnter={e => (e.currentTarget.style.color = "var(--red)")} onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
                     >Remove</button>
-                    <span className={`text-stone-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                    <span className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--text-muted)' }}>▾</span>
                   </div>
                 </div>
 
@@ -343,7 +349,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
                     <div className="grid grid-cols-4 gap-2">
                       {(['company', 'location', 'startDate', 'endDate'] as const).map(f => (
                         <div key={f}>
-                          <label className="text-stone-500 text-xs font-mono uppercase tracking-wider block mb-1">{f}</label>
+                          <label className="block mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>{f}</label>
                           <input
                             className="input-field w-full"
                             value={exp[f] || ''}
@@ -356,71 +362,76 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
                     {/* Frame Tabs */}
                     <div>
                       <div className="flex items-center gap-1 mb-3 flex-wrap">
-                        {exp.frames.map(frame => (
+                        {exp.versions.map(version => (
                           <div
-                            key={frame.id}
+                            key={version.id}
                             role="tab"
-                            onClick={() => setActiveFrame(prev => ({ ...prev, [exp.id]: frame.id }))}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-all ${
-                              currentFrameId === frame.id
-                                ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
-                                : 'bg-stone-800 border border-stone-700 text-stone-400 hover:text-stone-200'
-                            }`}
+                            onClick={() => setActiveVersion(prev => ({ ...prev, [exp.id]: version.id }))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-all"
+                            style={currentVersionId === version.id
+                              ? { background: 'var(--green-dim)', border: '1px solid var(--green-border)', color: 'var(--green)' }
+                              : { background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
                           >
-                            <span className="font-mono text-xs truncate max-w-32">{frame.title || 'Untitled'}</span>
-                            {exp.frames.length > 1 && (
+                            <span className="truncate max-w-32" style={{ fontFamily: 'Instrument Sans', fontSize: '12px' }}>{version.title || 'Untitled'}</span>
+                            {exp.versions.length > 1 && (
                               <button
-                                onClick={e => { e.stopPropagation(); deleteFrame(exp.id, frame.id) }}
-                                className="text-stone-600 hover:text-red-400 ml-1 leading-none"
+                                onClick={e => { e.stopPropagation(); deleteVersion(exp.id, version.id) }}
+                                className="ml-1 leading-none" style={{ color: 'var(--text-muted)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
                               >×</button>
                             )}
                           </div>
                         ))}
                         <button
-                          onClick={() => addFrame(exp.id)}
-                          className="px-3 py-1.5 rounded-lg text-xs text-amber-500 hover:text-amber-400 border border-dashed border-amber-500/30 hover:border-amber-500/60 transition-all font-mono"
-                        >+ Frame</button>
+                          onClick={() => addVersion(exp.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs transition-all font-mono"
+                          style={{ color: 'var(--text-muted)', border: '1px dashed var(--border-2)' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--text-dim)' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-2)' }}
+                        >+ Version</button>
                       </div>
 
                       {/* Active Frame Editor */}
-                      {currentFrame && (
-                        <div className="bg-stone-900/50 rounded-lg p-4 border border-stone-700/50">
+                      {currentVersion && (
+                        <div className="rounded-lg p-4" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                           <div className="mb-3">
-                            <label className="text-stone-500 text-xs font-mono uppercase tracking-wider block mb-1">Title</label>
+                            <label className="block mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Title</label>
                             <input
                               className="input-field w-full"
-                              value={currentFrame.title}
-                              onChange={e => updateFrame(exp.id, currentFrame.id, { title: e.target.value })}
+                              value={currentVersion.title}
+                              onChange={e => updateVersion(exp.id, currentVersion.id, { title: e.target.value })}
                               placeholder="Job Title"
                             />
                           </div>
                           <div>
-                            <label className="text-stone-500 text-xs font-mono uppercase tracking-wider block mb-2">Bullets</label>
+                            <label className="block mb-2" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Bullets</label>
                             <div className="space-y-2">
-                              {currentFrame.bullets.map((bullet, j) => (
+                              {currentVersion.bullets.map((bullet, j) => (
                                 <div key={j} className="flex gap-2 items-start">
-                                  <span className="text-amber-500 mt-2 font-mono">•</span>
+                                  <span className="mt-2 font-mono" style={{ color: 'var(--text-dim)' }}>•</span>
                                   <textarea
                                     className="input-field flex-1 resize-none"
                                     rows={2}
                                     value={bullet}
-                                    onChange={e => updateBullet(exp.id, currentFrame.id, j, e.target.value)}
+                                    onChange={e => updateBullet(exp.id, currentVersion.id, j, e.target.value)}
                                     placeholder="Describe your achievement..."
                                   />
                                   <button
-                                    onClick={() => deleteBullet(exp.id, currentFrame.id, j)}
-                                    className="text-stone-600 hover:text-red-400 transition-colors mt-2 text-lg leading-none"
+                                    onClick={() => deleteBullet(exp.id, currentVersion.id, j)}
+                                    className="transition-colors mt-2 text-lg leading-none" style={{ color: 'var(--text-muted)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
                                   >×</button>
                                 </div>
                               ))}
                               <button
-                                onClick={() => addBullet(exp.id, currentFrame.id)}
-                                className="text-amber-500 hover:text-amber-400 text-sm font-mono transition-colors"
+                                onClick={() => addBullet(exp.id, currentVersion.id)}
+                                className="text-sm font-mono transition-colors"
+                                style={{ color: 'var(--text-muted)' }}
+                                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
                               >+ Add bullet</button>
                             </div>
                           </div>
-                          {currentFrame.sourceFile && (
-                            <p className="text-stone-600 text-xs font-mono mt-3">Source: {currentFrame.sourceFile}</p>
+                          {currentVersion.sourceFile && (
+                            <p className="text-xs mt-3" style={{ color: 'var(--text-dim)', fontFamily: 'DM Mono' }}>Source: {currentVersion.sourceFile}</p>
                           )}
                         </div>
                       )}

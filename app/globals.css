@@ -2,17 +2,37 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0c0c0f;
-  --surface: #141418;
-  --surface-2: #1c1c22;
-  --border: #26262e;
-  --border-2: #32323c;
-  --text: #f0f0ec;
-  --text-muted: #6b6b78;
-  --text-dim: #3a3a45;
-  --amber: #f0a020;
-  --amber-dim: rgba(240, 160, 32, 0.15);
-  --amber-border: rgba(240, 160, 32, 0.3);
+  /*
+   * Palette: warm off-white base + black primary + green accent
+   * Reference: magicv.art — near-monochromatic, personality from space & type
+   */
+
+  /* Warm off-white base (OKLCH hue 80 = amber direction, very low chroma) */
+  --bg:         oklch(93%  0.010  80);  /* ~#ece8e2 — warm light gray */
+  --surface:    oklch(97%  0.007  80);  /* ~#f6f4f0 — near-white card */
+  --surface-2:  oklch(91%  0.013  80);  /* ~#e8e4dc — inputs, nested areas */
+  --border:     oklch(87%  0.016  80);  /* ~#ddd7ce */
+  --border-2:   oklch(81%  0.020  80);  /* ~#cdc6bb */
+  --text:       oklch(15%  0.010  80);  /* ~#1a1810 — warm near-black */
+  --text-muted: oklch(54%  0.018  80);  /* ~#8c7e6e */
+  --text-dim:   oklch(75%  0.014  80);  /* ~#c4bcb0 */
+
+  /* Primary action — pure black (no brand color, just authority) */
+  --ink:        #1a1810;
+  --ink-soft:   oklch(25%  0.010  80);  /* hover state */
+
+  /* Green — the ONE accent color: ATS success, keywords matched, active */
+  --green:        oklch(52%  0.155  145);  /* #1e8a52 — forest green */
+  --green-bright: oklch(60%  0.17   145);  /* hover */
+  --green-dim:    oklch(52%  0.155  145 / 0.09);
+  --green-border: oklch(52%  0.155  145 / 0.25);
+
+  /* Semantic only — not brand colors */
+  --red:        oklch(48%  0.17    25);   /* #b83030 */
+  --red-dim:    oklch(48%  0.17    25 / 0.08);
+  --red-border: oklch(48%  0.17    25 / 0.22);
+  --orange:     oklch(62%  0.16    55);   /* warning/missing — muted amber */
+  --blue:       oklch(48%  0.16   265);
 }
 
 * {
@@ -38,8 +58,11 @@ h1, h2, h3, .font-display {
 .card {
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
+  box-shadow:
+    0 1px 2px oklch(15% 0.010 80 / 0.06),
+    0 2px 8px oklch(15% 0.010 80 / 0.04);
 }
 
 /* Inputs */
@@ -56,31 +79,33 @@ h1, h2, h3, .font-display {
 }
 
 .input-field:focus {
-  border-color: var(--amber-border);
-  box-shadow: 0 0 0 3px rgba(240, 160, 32, 0.08);
+  border-color: var(--green-border);
+  box-shadow: 0 0 0 3px var(--green-dim);
 }
 
 .input-field::placeholder {
   color: var(--text-dim);
 }
 
-/* Buttons */
+/* Primary button — black, like magicv.art */
 .btn-primary {
-  background-color: var(--amber);
-  color: #0c0c0f;
+  background-color: var(--ink);
+  color: var(--surface);
   font-family: 'Syne', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 1px 3px oklch(15% 0.010 80 / 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
+  background-color: var(--ink-soft);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px oklch(15% 0.010 80 / 0.18);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -88,14 +113,14 @@ h1, h2, h3, .font-display {
 }
 
 .btn-primary:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .btn-ghost {
   background-color: transparent;
   color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  font-family: 'Instrument Sans', sans-serif;
   font-size: 12px;
   padding: 6px 12px;
   border-radius: 6px;
@@ -107,13 +132,14 @@ h1, h2, h3, .font-display {
 .btn-ghost:hover {
   border-color: var(--border-2);
   color: var(--text);
+  background-color: var(--surface-2);
 }
 
 /* Section Labels */
 .section-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
@@ -121,27 +147,14 @@ h1, h2, h3, .font-display {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-2);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
 /* Animations */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-.animate-fade-up {
-  animation: fadeUp 0.3s ease forwards;
-}
+.animate-fade-up { animation: fadeUp 0.25s ease forwards; }

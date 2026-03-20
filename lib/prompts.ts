@@ -50,30 +50,30 @@ Rules:
 - If a field is not found, use empty string`
 }
 
-export function buildFrameSelectionPrompt(
+export function buildVersionSelectionPrompt(
   jdText: string,
   experiences: Experience[]
 ): string {
   const expSummary = experiences.map(exp => ({
     id: exp.id,
     company: exp.company,
-    frames: exp.frames.map(f => ({
-      id: f.id,
-      title: f.title,
+    versions: exp.versions.map(v => ({
+      id: v.id,
+      title: v.title,
     }))
   }))
 
-  return `You are a senior recruiter selecting the best job title frame for each work experience to maximize a candidate's fit for a specific role.
+  return `You are a senior recruiter selecting the best job title version for each work experience to maximize a candidate's fit for a specific role.
 
 JOB DESCRIPTION:
 ${jdText.slice(0, 3000)}
 
-CANDIDATE'S EXPERIENCES WITH AVAILABLE FRAMES:
+CANDIDATE'S EXPERIENCES WITH AVAILABLE VERSIONS:
 ${JSON.stringify(expSummary, null, 2)}
 
-Your task — select the single best Frame title for each experience.
+Your task — select the single best Version title for each experience.
 
-Rule: Pick the Frame whose title a recruiter hiring for this JD would find most relevant.
+Rule: Pick the Version whose title a recruiter hiring for this JD would find most relevant.
 - Selection is based ENTIRELY on title function match — do NOT consider bullet content
 - Choose the title that is closest in job function to the JD's primary role
 - "Closest" means same functional family, not necessarily exact wording:
@@ -87,7 +87,7 @@ Return JSON:
   "jdFunction": "...",
   "jdSeniority": "...",
   "selections": [
-    { "experienceId": "...", "selectedFrameId": "...", "reason": "one sentence why" }
+    { "experienceId": "...", "selectedVersionId": "...", "reason": "one sentence why" }
   ]
 }`
 }
