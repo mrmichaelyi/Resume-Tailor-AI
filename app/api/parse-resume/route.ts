@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import pdfParse from 'pdf-parse'
+import { extractText } from 'unpdf'
 import mammoth from 'mammoth'
 import { buildParsePrompt } from '@/lib/prompts'
 import { Experience, Education, FactBank } from '@/lib/types'
@@ -9,13 +9,12 @@ import { randomUUID } from 'crypto'
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 async function detectAndExtractText(buffer: Buffer, filename: string): Promise<string> {
-  const header = buffer.slice(0, 4).toString('binary')
   const isPDF = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46
   const isDOCX = buffer[0] === 0x50 && buffer[1] === 0x4B
 
   if (isPDF) {
-    const result = await pdfParse(buffer)
-    return result.text
+    const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
+    return Array.isArray(text) ? text.join('\n') : text
   } else if (isDOCX) {
     const result = await mammoth.extractRawText({ buffer })
     return result.value

@@ -16,7 +16,7 @@ interface Props {
 export default function FactBankEditor({ factBank, onChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadErrors, setUploadErrors] = useState<string[]>([])
-  const [expandedExp, setExpandedExp] = useState<string | null>(null)
+  const [expandedExp, setExpandedExp] = useState<Set<string>>(new Set())
   const [activeVersion, setActiveVersion] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -106,7 +106,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
       versions: [{ id: versionId, title: 'Title', bullets: [''], sourceFile: undefined }],
     }
     update({ ...factBank, experiences: [...factBank.experiences, newExp] })
-    setExpandedExp(id)
+    setExpandedExp(prev => new Set([...prev, id]))
     setActiveVersion(prev => ({ ...prev, [id]: versionId }))
   }
 
@@ -319,7 +319,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         </div>
         <div className="space-y-3">
           {factBank.experiences.map(exp => {
-            const isOpen = expandedExp === exp.id
+            const isOpen = expandedExp.has(exp.id)
             const currentVersionId = activeVersion[exp.id] || exp.versions[0]?.id
             const currentVersion = exp.versions.find(f => f.id === currentVersionId) || exp.versions[0]
 
@@ -328,7 +328,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
                 {/* Experience Header */}
                 <div
                   className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setExpandedExp(isOpen ? null : exp.id)}
+                  onClick={() => setExpandedExp(prev => { const s = new Set(prev); isOpen ? s.delete(exp.id) : s.add(exp.id); return s })}
                 >
                   <div>
                     <span style={{ fontFamily: 'Syne', fontWeight: 600, fontSize: '15px', color: 'var(--text)' }}>{exp.company || 'Unnamed Company'}</span>

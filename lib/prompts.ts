@@ -1,7 +1,7 @@
 import { Experience } from './types'
 
 export function buildParsePrompt(text: string, filename: string): string {
-  return `You are parsing a resume document. Extract all information and return valid JSON.
+  return `You are a resume parser. Extract structured data from the resume text below and return valid JSON.
 
 RESUME TEXT (from file: ${filename}):
 ${text}
@@ -41,13 +41,15 @@ Return JSON with this exact structure:
   "skills": ["Category: skill1, skill2"]
 }
 
-Rules:
-- Extract exact text from the resume, do not paraphrase bullets
-- For dates use format like "Jan 2022" or "2020–2023" as written
-- LinkedIn: extract profile URL or username only
-- GitHub: extract profile URL or username only
-- skills: array of strings, each string is one category line like "Technical: Python, SQL, React"
-- If a field is not found, use empty string`
+Parsing rules:
+- EXPERIENCES: Extract every work experience, internship, freelance role, and volunteer position. Each role is one object. If someone held multiple titles at the same company, create one experience object per title (they will be merged automatically). Copy bullets verbatim — do not paraphrase, summarize, or rephrase.
+- SUMMARY / PROFILE / OBJECTIVE sections: Ignore completely. Do not put any summary text into bullets. These sections do not map to any field.
+- BULLETS: Only include actual bullet points or responsibility statements from the Experience section. Never put summary or profile text here.
+- DATES: Use the exact format written in the resume (e.g. "Jan 2022", "2020", "Present", "Current").
+- SKILLS: Flatten all skills into an array of strings. If the resume has skill categories (e.g. "Languages: Python, SQL"), preserve as "Languages: Python, SQL". If uncategorized, use "Skills: skill1, skill2".
+- EDUCATION: Include all degrees, certifications, and bootcamps. Put honors, GPA, or relevant coursework in notes[].
+- CONTACT: For linkedin, extract only the profile slug or full URL. Same for github. If a field is absent, use "".
+- If the resume text is garbled, poorly formatted, or has OCR artifacts, do your best to extract what you can.`
 }
 
 export function buildVersionSelectionPrompt(

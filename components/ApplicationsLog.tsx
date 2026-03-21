@@ -17,7 +17,7 @@ function fmt(iso: string) {
 }
 
 export default function ApplicationsLog({ applications, onChange }: Props) {
-  const [expanded, setExpanded] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [importError, setImportError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -85,7 +85,7 @@ export default function ApplicationsLog({ applications, onChange }: Props) {
 
       {/* Application cards */}
       {applications.map(app => {
-        const isOpen = expanded === app.id
+        const isOpen = expanded.has(app.id)
         const score = app.resume?.jdKeywordCoverage?.score ?? null
         const beforeScore = app.resume?.jdKeywordCoverage?.beforeScore ?? null
         const improvement = score != null && beforeScore != null ? score - beforeScore : null
@@ -98,7 +98,7 @@ export default function ApplicationsLog({ applications, onChange }: Props) {
             <div
               className="flex items-center justify-between cursor-pointer"
               style={{ padding: '16px 20px' }}
-              onClick={() => setExpanded(isOpen ? null : app.id)}
+              onClick={() => setExpanded(prev => { const s = new Set(prev); isOpen ? s.delete(app.id) : s.add(app.id); return s })}
             >
               <div className="flex items-center gap-4">
                 {/* Date */}

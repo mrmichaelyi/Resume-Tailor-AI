@@ -4,13 +4,17 @@ An AI-powered resume builder that tailors your resume for every job application 
 
 ---
 
+![Demo](demo.gif)
+
+---
+
 ## Why I Built This
 
-Job hunting is brutal. I spent months applying to roles I was genuinely qualified for, only to hear nothing back. The problem wasn't my experience — it was that my resume never made it past the ATS (Applicant Tracking System) that most companies use to filter candidates before a human ever sees the application.
+I have seen many talented people around me struggle to get interviews, even when they were clearly qualified for the roles they applied to. It was not because they lacked experience or ability. In many cases, their resumes simply did not include enough of the right keywords from the job description.
 
-ATS systems scan resumes for specific keywords from the job description. If your resume doesn't use the exact phrasing the JD uses — even if you have the skills — you get filtered out automatically. "A/B testing" and "A/B test" are the same thing to a human, but not to an ATS.
+As I learned more about how ATS systems work, I realized this was a much bigger problem than I first thought. These systems often rely heavily on keyword matching, which means strong candidates can get filtered out before a recruiter ever sees their application. It is not that people are not good enough. It is that their resumes are not written in the exact language the system is looking for.
 
-I built Resume Tailor AI because I didn't want other people to get filtered out for the wrong reasons. Your experience is real. Your skills are real. You deserve a fair shot at being seen.
+Because of that, many job seekers now end up rewriting their resume for every single job description just to improve their chances. That process is time-consuming, repetitive, and exhausting. I built Resume Tailor AI to make that process faster and easier, while still preserving the quality and authenticity of the original resume.
 
 ---
 
@@ -81,7 +85,7 @@ Upload resumes → Build Fact Bank → Paste JD → Generate Resume
 ## Tech Stack
 
 - **Next.js 16** (App Router)
-- **OpenAI GPT-4o** — frame selection, JD keyword report, bullet rewrite, skills reorganization
+- **OpenAI GPT-4o** — version selection, JD keyword report, bullet rewrite, skills reorganization
 - **@react-pdf/renderer** — PDF generation server-side
 - **Tailwind CSS**
 - TypeScript throughout
@@ -127,7 +131,7 @@ Open [http://localhost:3000](http://localhost:3000).
 app/
   api/
     parse-resume/     # Upload & extract resume data (PDF/DOCX)
-    generate-resume/  # Main AI pipeline: frame selection + bullet rewrite
+    generate-resume/  # Main AI pipeline: version selection + bullet rewrite
     boost-ats/        # Aggressive ATS optimization pass
     download-pdf/     # Server-side PDF rendering
     scrape-jd/        # JD URL scraping
