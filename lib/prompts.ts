@@ -38,17 +38,27 @@ Return JSON with this exact structure:
       "notes": []
     }
   ],
-  "skills": ["Category: skill1, skill2"]
+  "skills": ["Category: skill1, skill2"],
+  "projects": [
+    {
+      "name": "",
+      "startDate": "",
+      "endDate": "",
+      "bullets": ["..."]
+    }
+  ]
 }
 
 Parsing rules:
 - EXPERIENCES: Extract every work experience, internship, freelance role, and volunteer position. Each role is one object. If someone held multiple titles at the same company, create one experience object per title (they will be merged automatically). Copy bullets verbatim — do not paraphrase, summarize, or rephrase.
+- PROJECTS: Extract all personal, academic, or side projects from sections labeled "Projects", "Academic Projects", "Personal Projects", or similar. Each project is one object. startDate and endDate may be empty strings if not stated. Copy bullets verbatim.
 - SUMMARY / PROFILE / OBJECTIVE sections: Ignore completely. Do not put any summary text into bullets. These sections do not map to any field.
-- BULLETS: Only include actual bullet points or responsibility statements from the Experience section. Never put summary or profile text here.
-- DATES: Use the exact format written in the resume (e.g. "Jan 2022", "2020", "Present", "Current").
+- BULLETS: Only include actual bullet points or responsibility statements from the Experience or Project section. Never put summary or profile text here.
+- DATES: Use the exact format written in the resume (e.g. "Jan 2022", "2020", "Present", "Current"). Use "" if absent.
 - SKILLS: Flatten all skills into an array of strings. If the resume has skill categories (e.g. "Languages: Python, SQL"), preserve as "Languages: Python, SQL". If uncategorized, use "Skills: skill1, skill2".
 - EDUCATION: Include all degrees, certifications, and bootcamps. Put honors, GPA, or relevant coursework in notes[].
 - CONTACT: For linkedin, extract only the profile slug or full URL. Same for github. If a field is absent, use "".
+- If the resume has no projects section, return "projects": [].
 - If the resume text is garbled, poorly formatted, or has OCR artifacts, do your best to extract what you can.`
 }
 

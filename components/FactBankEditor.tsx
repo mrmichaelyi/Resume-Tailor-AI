@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { FactBank, Experience, Education, Version } from '@/lib/types'
+import { FactBank, Experience, Education, Version, Project } from '@/lib/types'
 import { saveFactBank, exportFactBank, importFactBank } from '@/lib/storage'
 
 function newId() {
@@ -17,6 +17,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [uploadErrors, setUploadErrors] = useState<string[]>([])
   const [expandedExp, setExpandedExp] = useState<Set<string>>(new Set())
+  const [expandedProj, setExpandedProj] = useState<Set<string>>(new Set())
   const [activeVersion, setActiveVersion] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -43,6 +44,7 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         education: mergeEducation(factBank.education, newFB.education),
         experiences: mergeExperiences(factBank.experiences, newFB.experiences),
         skills: mergeSkills(factBank.skills, newFB.skills),
+        projects: mergeProjects(factBank.projects || [], newFB.projects || []),
       }
       update(merged)
       if (data.errors?.length) {
@@ -80,6 +82,45 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
   function mergeSkills(existing: string[], incoming: string[]): string[] {
     const set = new Set([...existing, ...incoming])
     return Array.from(set)
+  }
+
+  function mergeProjects(existing: Project[], incoming: Project[]): Project[] {
+    const map = new Map(existing.map(p => [p.name.toLowerCase(), p]))
+    for (const proj of incoming) {
+      if (!map.has(proj.name.toLowerCase())) map.set(proj.name.toLowerCase(), proj)
+    }
+    return Array.from(map.values())
+  }
+
+  function updateProj(id: string, patch: Partial<Project>) {
+    update({ ...factBank, projects: (factBank.projects || []).map(p => p.id === id ? { ...p, ...patch } : p) })
+  }
+
+  function deleteProj(id: string) {
+    update({ ...factBank, projects: (factBank.projects || []).filter(p => p.id !== id) })
+  }
+
+  function addProj() {
+    const id = newId()
+    const newProj: Project = { id, name: 'New Project', startDate: '', endDate: '', bullets: [''] }
+    update({ ...factBank, projects: [...(factBank.projects || []), newProj] })
+    setExpandedProj(prev => new Set([...prev, id]))
+  }
+
+  function updateProjBullet(projId: string, idx: number, value: string) {
+    const proj = (factBank.projects || []).find(p => p.id === projId)!
+    const newBullets = proj.bullets.map((b, i) => i === idx ? value : b)
+    updateProj(projId, { bullets: newBullets })
+  }
+
+  function addProjBullet(projId: string) {
+    const proj = (factBank.projects || []).find(p => p.id === projId)!
+    updateProj(projId, { bullets: [...proj.bullets, ''] })
+  }
+
+  function deleteProjBullet(projId: string, idx: number) {
+    const proj = (factBank.projects || []).find(p => p.id === projId)!
+    updateProj(projId, { bullets: proj.bullets.filter((_, i) => i !== idx) })
   }
 
   function updateContact(field: keyof FactBank['contact'], value: string) {
@@ -311,6 +352,9 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
         </div>
       </section>
 
+      {/* Divider between Skills and Work Experience */}
+      <hr style={{ borderColor: 'var(--border-2)' }} />
+
       {/* Experiences */}
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -435,6 +479,85 @@ export default function FactBankEditor({ factBank, onChange }: Props) {
                           )}
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Projects */}
+      {((factBank.projects || []).length > 0) && (
+        <hr style={{ borderColor: 'var(--border-2)' }} />
+      )}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="section-label mb-0">Project Experience</h3>
+          <button onClick={addProj} className="btn-ghost text-xs">+ Add Project</button>
+        </div>
+        <div className="space-y-3">
+          {(factBank.projects || []).map(proj => {
+            const isOpen = expandedProj.has(proj.id)
+            return (
+              <div key={proj.id} className="card">
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setExpandedProj(prev => { const s = new Set(prev); isOpen ? s.delete(proj.id) : s.add(proj.id); return s })}
+                >
+                  <span style={{ fontFamily: 'Syne', fontWeight: 600, fontSize: '15px', color: 'var(--text)' }}>{proj.name || 'Unnamed Project'}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteProj(proj.id) }}
+                      className="transition-colors text-sm" style={{ color: 'var(--text-muted)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                    >Remove</button>
+                    <span className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--text-muted)' }}>▾</span>
+                  </div>
+                </div>
+
+                {isOpen && (
+                  <div className="mt-4 space-y-4">
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['name', 'startDate', 'endDate'] as const).map(f => (
+                        <div key={f}>
+                          <label className="block mb-1" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{f === 'name' ? 'Project Name' : f}</label>
+                          <input
+                            className="input-field w-full"
+                            value={proj[f] || ''}
+                            onChange={e => updateProj(proj.id, { [f]: e.target.value })}
+                            placeholder={f === 'startDate' || f === 'endDate' ? 'optional' : ''}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <label className="block mb-2" style={{ color: 'var(--text-muted)', fontFamily: 'Instrument Sans', fontSize: '10.5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bullets</label>
+                      <div className="space-y-2">
+                        {proj.bullets.map((bullet, j) => (
+                          <div key={j} className="flex gap-2 items-start">
+                            <span className="mt-2 font-mono" style={{ color: 'var(--text-dim)' }}>•</span>
+                            <textarea
+                              className="input-field flex-1 resize-none"
+                              rows={2}
+                              value={bullet}
+                              onChange={e => updateProjBullet(proj.id, j, e.target.value)}
+                              placeholder="Describe your project..."
+                            />
+                            <button
+                              onClick={() => deleteProjBullet(proj.id, j)}
+                              className="transition-colors mt-2 text-lg leading-none" style={{ color: 'var(--text-muted)' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                            >×</button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => addProjBullet(proj.id)}
+                          className="text-sm font-mono transition-colors"
+                          style={{ color: 'var(--text-muted)' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                        >+ Add bullet</button>
+                      </div>
                     </div>
                   </div>
                 )}

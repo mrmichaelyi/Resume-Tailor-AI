@@ -249,6 +249,29 @@ export function ResumePDFDocument({ resume }: { resume: GeneratedResume }) {
             ))}
           </View>
         )}
+
+        {/* Projects */}
+        {(resume.projects || []).length > 0 && (
+          <View>
+            <Text style={styles.sectionTitle}>PROJECTS</Text>
+            {(resume.projects || []).map((proj, i) => (
+              <View key={i} style={styles.expBlock}>
+                <View style={styles.expHeader}>
+                  <Text style={styles.company}>{proj.name}</Text>
+                  <Text style={styles.company}>
+                    {proj.startDate || ''}{proj.startDate && proj.endDate ? ' – ' : ''}{proj.endDate || ''}
+                  </Text>
+                </View>
+                {proj.bullets.filter(b => b.trim()).map((bullet, j) => (
+                  <View key={j} style={styles.bullet}>
+                    <Text style={styles.bulletDot}>•</Text>
+                    <Text style={styles.bulletText}>{bullet}</Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        )}
       </Page>
     </Document>
   )

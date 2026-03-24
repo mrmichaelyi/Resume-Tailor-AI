@@ -136,7 +136,7 @@ export default function JDInput({ factBank, onGenerated }: Props) {
             </button>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'Instrument Sans' }}>
-            Works with: Greenhouse, Lever, company career pages · LinkedIn requires manual paste · Always verify fetched JD looks correct — if not, paste text directly
+            Works with: Greenhouse, Lever, company career pages · LinkedIn requires manual paste · <strong>Always verify fetched JD looks correct — if not, paste text directly</strong>
           </p>
           {scrapedText && (
             <div className="rounded-lg p-3" style={{ background: 'var(--green-dim)', border: '1px solid var(--green-border)' }}>

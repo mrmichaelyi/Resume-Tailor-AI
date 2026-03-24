@@ -35,11 +35,20 @@ export interface Contact {
   website: string
 }
 
+export interface Project {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+  bullets: string[]
+}
+
 export interface FactBank {
   contact: Contact
   experiences: Experience[]
   education: Education[]
   skills: string[]
+  projects?: Project[]
 }
 
 export interface GeneratedExperience {
@@ -70,6 +79,7 @@ export interface GeneratedResume {
   education: Education[]
   skills: string[]
   experiences: GeneratedExperience[]
+  projects?: Project[]
   jdKeywordCoverage: {
     covered: string[]
     missing: string[]

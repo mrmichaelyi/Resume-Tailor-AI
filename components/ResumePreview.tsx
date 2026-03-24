@@ -203,6 +203,18 @@ export default function ResumePreview({ resume, onChange, onDownloaded }: Props)
   const deleteSkill = (idx: number) =>
     onChange({ ...resume, skills: resume.skills.filter((_, i) => i !== idx) })
 
+  const upProj = (idx: number, field: string, v: string) =>
+    onChange({ ...resume, projects: (resume.projects || []).map((p, i) => i === idx ? { ...p, [field]: v } : p) })
+
+  const upProjBullet = (pi: number, bi: number, v: string) =>
+    onChange({ ...resume, projects: (resume.projects || []).map((p, i) => i === pi ? { ...p, bullets: p.bullets.map((b, j) => j === bi ? v : b) } : p) })
+
+  const deleteProjBullet = (pi: number, bi: number) =>
+    onChange({ ...resume, projects: (resume.projects || []).map((p, i) => i === pi ? { ...p, bullets: p.bullets.filter((_, j) => j !== bi) } : p) })
+
+  const addProjBullet = (pi: number) =>
+    onChange({ ...resume, projects: (resume.projects || []).map((p, i) => i === pi ? { ...p, bullets: [...p.bullets, ''] } : p) })
+
   async function downloadPDF() {
     setDownloading(true)
     try {
@@ -507,6 +519,35 @@ export default function ResumePreview({ resume, onChange, onDownloaded }: Props)
                   ))}
                   <button
                     onClick={() => addBullet(i)}
+                    style={{ marginLeft: '10px', marginTop: '2px', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '7.5pt', fontFamily: 'Cambria, "Times New Roman", serif', padding: 0 }}
+                  >+ add bullet</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Projects */}
+          {(resume.projects || []).length > 0 && (
+            <div style={{ marginTop: '6px' }}>
+              <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '9pt', borderBottom: '2px solid black', paddingBottom: '1px', marginBottom: '4px' }}>PROJECTS</div>
+              {(resume.projects || []).map((proj, pi) => (
+                <div key={proj.id} style={{ marginBottom: '5px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                    <span style={{ fontWeight: 'bold' }}><Editable value={proj.name} onChange={v => upProj(pi, 'name', v)} /></span>
+                    <span style={{ fontWeight: 'bold', color: '#333' }}>
+                      {proj.startDate && <Editable value={proj.startDate} onChange={v => upProj(pi, 'startDate', v)} />}
+                      {proj.startDate && proj.endDate && <span> – </span>}
+                      {proj.endDate && <Editable value={proj.endDate} onChange={v => upProj(pi, 'endDate', v)} />}
+                    </span>
+                  </div>
+                  {proj.bullets.map((bullet, bi) => (
+                    <Row key={bi} id={`projbullet-${pi}-${bi}`} hovered={hovered} setHovered={setHovered} onDelete={() => deleteProjBullet(pi, bi)} style={{ marginBottom: '1.5px' }}>
+                      <span style={{ width: '10px', flexShrink: 0, userSelect: 'none' }}>•</span>
+                      <Editable value={bullet} onChange={v => upProjBullet(pi, bi, v)} style={{ flex: 1, textAlign: 'justify' }} />
+                    </Row>
+                  ))}
+                  <button
+                    onClick={() => addProjBullet(pi)}
                     style={{ marginLeft: '10px', marginTop: '2px', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '7.5pt', fontFamily: 'Cambria, "Times New Roman", serif', padding: 0 }}
                   >+ add bullet</button>
                 </div>

@@ -3,7 +3,7 @@ import OpenAI from 'openai'
 import { extractText } from 'unpdf'
 import mammoth from 'mammoth'
 import { buildParsePrompt } from '@/lib/prompts'
-import { Experience, Education, FactBank } from '@/lib/types'
+import { Experience, Education, Project, FactBank } from '@/lib/types'
 import { randomUUID } from 'crypto'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -28,6 +28,7 @@ interface ParsedDoc {
   experiences: Array<{ company: string; location: string; startDate: string; endDate: string; title: string; bullets: string[] }>
   education: Array<{ school: string; location: string; degree: string; field: string; startDate: string; endDate: string; notes: string[] }>
   skills: string[]
+  projects?: Array<{ name: string; startDate: string; endDate: string; bullets: string[] }>
 }
 
 export async function POST(req: NextRequest) {
@@ -76,6 +77,7 @@ function mergeIntofactBank(
     experiences: [],
     education: [],
     skills: [],
+    projects: [],
   }
 
   const successResults = results.filter(r => r.parsed)
@@ -135,6 +137,19 @@ function mergeIntofactBank(
     }
   }
   factBank.skills = Array.from(skillSet)
+
+  // Merge projects: deduplicate by project name
+  const projectMap = new Map<string, Project>()
+  for (const result of successResults) {
+    if (!result.parsed?.projects) continue
+    for (const proj of result.parsed.projects) {
+      const key = proj.name.toLowerCase().trim()
+      if (!projectMap.has(key)) {
+        projectMap.set(key, { id: randomUUID(), ...proj })
+      }
+    }
+  }
+  factBank.projects = Array.from(projectMap.values())
 
   return factBank
 }

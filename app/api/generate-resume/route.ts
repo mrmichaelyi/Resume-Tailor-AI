@@ -194,6 +194,7 @@ export async function POST(req: NextRequest) {
       education: factBank.education,
       skills: skillsResult.skills || factBank.skills,
       experiences: generatedExperiences,
+      projects: factBank.projects?.length ? factBank.projects : undefined,
       jdKeywordCoverage: {
         covered, missing, beforeCovered, beforeMissing,
         hardSkillsMissing, score: afterScore, beforeScore,
