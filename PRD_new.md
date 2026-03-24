@@ -667,7 +667,7 @@ stepTimers: useRef<ReturnType<typeof setTimeout>[]>([])
 
 ### URL mode behavior
 - Input + "Fetch JD" button
-- On success: shows editable `<textarea>` (6 rows, transparent bg, no border, DM Mono 11px) inside green-dim box with **"JD fetched — please verify content carefully"** label (font-bold, green) — user should confirm content is a real JD before generating
+- On success: shows editable `<textarea>` (10 rows, transparent bg, no border, DM Mono 13px) inside green-dim box with **"JD fetched — please verify content carefully"** label (font-bold, green) — user should confirm content is a real JD before generating
 - User can directly edit the scraped text before generating
 - On error: show error message; if not LinkedIn, auto-switch to text mode
 
@@ -781,6 +781,7 @@ A `816px` wide, `min-height: 1056px` white div (US Letter dimensions at 96dpi) w
 - `padding: 36px`
 - `font-family: Cambria, "Times New Roman", serif`
 - `fontSize: 8.5pt, lineHeight: 1.25`
+- `transform: scale(1.14), transformOrigin: top center, marginBottom: 148px` — visually zoomed in ~14% on screen only; PDF output unaffected
 - Red dashed page boundary line at `top: 1008px` (absolute positioned, pointer-events none)
 
 **Section order**: Education → Skills → Work Experience
@@ -802,6 +803,11 @@ A `816px` wide, `min-height: 1056px` white div (US Letter dimensions at 96dpi) w
 - Company bold + location bold (space-between)
 - Title italic + dates (space-between)
 - Bullets: `•` dot + `Editable`, hover-delete enabled
+
+**Projects section**: `PROJECTS` — only rendered if `resume.projects` is non-empty
+- Project name bold (left) + dates bold (right, `startDate – endDate`, either may be omitted)
+- Bullets: `•` dot + `Editable`, hover-delete enabled, "+ add bullet" button
+- Passed through from FactBank as-is (not rewritten by AI)
 - "+ add bullet" button below each experience
 
 ---
@@ -814,7 +820,7 @@ Server-side only. Uses `@react-pdf/renderer`.
 
 **Page**: `LETTER` size, all padding 36pt, `fontSize: 8.5`, `lineHeight: 1.25`
 
-**Section order**: Education → Skills → Work Experience (same as preview)
+**Section order**: Education → Skills → Work Experience → Projects (same as preview; Projects omitted if empty)
 
 **Contact line**: centered `flexDirection: row, justifyContent: center, flexWrap: wrap`
 - Items: phone (plain), email (Link to mailto), linkedin (Link text "LinkedIn"), github (Link text "GitHub"), website (Link text "Website")
@@ -840,10 +846,11 @@ Dashed border (`1.5px dashed var(--border-2)`), `surface-2` bg. Click or drag-an
 
 ### Upload → parse → merge
 1. POST `multipart/form-data` to `/api/parse-resume`
-2. Merge new `FactBank` into existing using `mergeEducation`, `mergeExperiences`, `mergeSkills`
+2. Merge new `FactBank` into existing using `mergeEducation`, `mergeExperiences`, `mergeSkills`, `mergeProjects`
    - `mergeExperiences`: same company → append new Versions; new company → add new Experience
    - `mergeEducation`: same school → keep existing (first seen wins)
    - `mergeSkills`: Set union of skill strings
+   - `mergeProjects`: same project name (case-insensitive) → keep existing; new name → add
 3. If merge preserves existing contact (only overwrite if name is empty)
 
 ### Experience card
@@ -865,6 +872,18 @@ Dashed border (`1.5px dashed var(--border-2)`), `surface-2` bg. Click or drag-an
 ### Skills section
 - Each skill: `•` dot + `input-field` + `×` button
 - "+ Add skill group" text button
+- `<hr>` divider between Skills and Work Experience sections
+
+### Work Experience section
+- Collapsible cards (same as before)
+- `<hr>` divider between Work Experience and Project Experience sections (only shown if `projects.length > 0`)
+
+### Project Experience section
+- Optional — only shown if `factBank.projects` has entries (or user clicks "+ Add Project")
+- Collapsible card: project name in Syne 600 15px + `▾` chevron + Remove button
+- Expanded: 3-col grid (Project Name, startDate, endDate — startDate/endDate optional)
+- Bullets: same pattern as experience version bullets
+- No versions concept — one set of bullets per project
 
 ### Export/Import
 - Export: triggers `factbank.json` download
