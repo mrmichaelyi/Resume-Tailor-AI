@@ -148,7 +148,7 @@ export default function JDInput({ factBank, onGenerated }: Props) {
               </div>
               <textarea
                 className="w-full resize-none"
-                rows={6}
+                rows={10}
                 value={scrapedText}
                 onChange={e => setScrapedText(e.target.value)}
                 style={{
@@ -157,7 +157,7 @@ export default function JDInput({ factBank, onGenerated }: Props) {
                   outline: 'none',
                   color: 'var(--text-muted)',
                   fontFamily: 'DM Mono',
-                  fontSize: '11px',
+                  fontSize: '13px',
                   lineHeight: 1.6,
                   width: '100%',
                   cursor: 'text',
