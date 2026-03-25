@@ -12,7 +12,7 @@ import { GeneratedResume } from '@/lib/types'
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Times-Roman',
-    fontSize: 8.5,
+    fontSize: 9,
     paddingTop: 36,
     paddingBottom: 36,
     paddingHorizontal: 36,
@@ -50,10 +50,10 @@ const styles = StyleSheet.create({
   },
   company: {
     fontFamily: 'Times-Bold',
-    fontSize: 8.5,
+    fontSize: 9,
   },
   location: {
-    fontSize: 8.5,
+    fontSize: 9,
     fontFamily: 'Times-Bold',
   },
   titleRow: {
@@ -62,11 +62,11 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   title: {
-    fontSize: 8.5,
+    fontSize: 9,
     fontFamily: 'Times-Italic',
   },
   dates: {
-    fontSize: 8.5,
+    fontSize: 9,
     color: '#333333',
   },
   bullet: {
@@ -76,11 +76,11 @@ const styles = StyleSheet.create({
   },
   bulletDot: {
     width: 10,
-    fontSize: 8.5,
+    fontSize: 9,
   },
   bulletText: {
     flex: 1,
-    fontSize: 8.5,
+    fontSize: 9,
     textAlign: 'justify',
   },
   expBlock: {
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   school: {
     fontFamily: 'Times-Bold',
-    fontSize: 8.5,
+    fontSize: 9,
   },
   degreeRow: {
     flexDirection: 'row',
@@ -102,11 +102,11 @@ const styles = StyleSheet.create({
   },
   degree: {
     fontFamily: 'Times-Italic',
-    fontSize: 8.5,
+    fontSize: 9,
   },
   degreeField: {
     fontFamily: 'Times-BoldItalic',
-    fontSize: 8.5,
+    fontSize: 9,
   },
   // Skills
   skillLine: {
@@ -115,15 +115,15 @@ const styles = StyleSheet.create({
   },
   skillBullet: {
     width: 10,
-    fontSize: 8.5,
+    fontSize: 9,
   },
   skillCategory: {
     fontFamily: 'Times-Bold',
-    fontSize: 8.5,
+    fontSize: 9,
   },
   skillText: {
     flex: 1,
-    fontSize: 8.5,
+    fontSize: 9,
   },
 })
 

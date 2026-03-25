@@ -428,7 +428,7 @@ export default function ResumePreview({ resume, onChange, onDownloaded }: Props)
 
       {/* Resume */}
       <div className="overflow-auto flex-1">
-        <div className="bg-white text-black mx-auto shadow-2xl relative" style={{ width: '816px', minHeight: '1056px', padding: '36px', fontFamily: 'Cambria, "Times New Roman", serif', fontSize: '8.5pt', lineHeight: 1.25, transform: 'scale(1.14)', transformOrigin: 'top center', marginBottom: '148px' }}>
+        <div className="bg-white text-black mx-auto shadow-2xl relative" style={{ width: '816px', minHeight: '1056px', padding: '36px', fontFamily: 'Cambria, "Times New Roman", serif', fontSize: '9pt', lineHeight: 1.25, transform: 'scale(1.14)', transformOrigin: 'top center', marginBottom: '148px' }}>
 
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '6px' }}>
@@ -500,10 +500,10 @@ export default function ResumePreview({ resume, onChange, onDownloaded }: Props)
               <div style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '9pt', borderBottom: '2px solid black', paddingBottom: '1px', marginBottom: '4px' }}>WORK EXPERIENCE</div>
               {resume.experiences.map((exp, i) => (
                 <div key={i} style={{ marginBottom: '5px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Row id={`exp-header-${i}`} hovered={hovered} setHovered={setHovered} onDelete={() => onChange({ ...resume, experiences: resume.experiences.filter((_, j) => j !== i) })} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: 'bold' }}><Editable value={exp.company} onChange={v => upExp(i, 'company', v)} /></span>
                     <span style={{ fontWeight: 'bold' }}><Editable value={exp.location} onChange={v => upExp(i, 'location', v)} /></span>
-                  </div>
+                  </Row>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
                     <Editable value={exp.title} onChange={v => upExp(i, 'title', v)} style={{ fontStyle: 'italic' }} />
                     <span style={{ color: '#333' }}>
