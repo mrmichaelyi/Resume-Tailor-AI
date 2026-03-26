@@ -15,7 +15,12 @@ export async function POST(req: NextRequest) {
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${resume.contact.name || 'resume'}.pdf"`,
+        'Content-Disposition': (() => {
+          const namePart = (resume.contact.name || 'Resume').replace(/\s+/g, '')
+          const companyPart = (resume.jdReport?.company || '').replace(/\s+/g, '')
+          const fileName = companyPart ? `${namePart}_${companyPart}.pdf` : `${namePart}.pdf`
+          return `attachment; filename="${fileName}"`
+        })(),
       },
     })
   } catch (err) {

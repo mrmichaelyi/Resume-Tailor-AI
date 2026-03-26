@@ -228,7 +228,9 @@ export default function ResumePreview({ resume, onChange, onDownloaded }: Props)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${resume.contact.name || 'resume'}.pdf`
+      const namePart = (resume.contact.name || 'Resume').replace(/\s+/g, '')
+      const companyPart = (resume.jdReport?.company || '').replace(/\s+/g, '')
+      a.download = companyPart ? `${namePart}_${companyPart}.pdf` : `${namePart}.pdf`
       a.click()
       URL.revokeObjectURL(url)
       onDownloaded?.()
