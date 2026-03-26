@@ -428,7 +428,7 @@ export default function ResumePreview({ resume, onChange, onDownloaded }: Props)
 
       {/* Resume */}
       <div className="overflow-auto flex-1">
-        <div className="bg-white text-black mx-auto shadow-2xl relative" style={{ width: '816px', minHeight: '1056px', padding: '36px', fontFamily: 'Cambria, "Times New Roman", serif', fontSize: '9pt', lineHeight: 1.25, transform: 'scale(1.14)', transformOrigin: 'top center', marginBottom: '148px' }}>
+        <div className="bg-white text-black mx-auto shadow-2xl relative" style={{ width: '816px', minHeight: '1056px', padding: '36px', fontFamily: 'Cambria, "Times New Roman", serif', fontSize: '8.5pt', lineHeight: 1.25, transform: 'scale(1.14)', transformOrigin: 'top center', marginBottom: '148px' }}>
 
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '6px' }}>
